@@ -56,15 +56,16 @@ def get_gspread_client():
   creds_dict = dict(st.secrets["gcp_service_account"])
   pk = creds_dict.get("private_key", "")
   
-  pk = pk.strip().strip('"').strip("'")
-  if "\\n" in pk:
-    pk = pk.replace("\\n", "\n")
+  if isinstance(pk, str):
+    pk = pk.replace("\\n", "\n").replace("\r\n", "\n")
+    lines = [line.strip() for line in pk.split("\n") if line.strip()]
+    pk = "\n".join(lines) + "\n"
     
   creds_dict["private_key"] = pk
   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
   return gspread.authorize(creds)
 
-MASTER_SHEET_ID = st.secrets["gcp_service_account"]["sheet_id"]
+MASTER_SHEET_ID = st.secrets["gcp_service_account"].get("sheet_id", "1Hia-zDA8XiwwIamshR6pgrVZzOUJVG4HL-eKteD4wP4")
 
 def hash_password(password):
   return hashlib.sha256(password.encode()).hexdigest()
@@ -132,7 +133,7 @@ def load_users_data():
       df_users = pd.DataFrame(users_list, columns=["Username", "Password Hash", "Organization", "Role"])
       if not df_users.empty:
         return df_users.fillna("")
-  except Exception as e:
+  except Exception:
     pass
 
   return pd.DataFrame([
@@ -360,7 +361,7 @@ def load_locality_data():
       df = pd.DataFrame(sheet.get_all_records())
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("")
-  except Exception as e:
+  except Exception:
     return pd.DataFrame(columns=["Item ID", "Organization", "Category", "Title & Details", "Window"])
 
 # --- 3. SESSION STATE & URL QUERY PARAMS PERSISTENCE ---
