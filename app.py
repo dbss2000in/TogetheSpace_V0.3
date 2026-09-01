@@ -104,26 +104,44 @@ def load_users_data():
     except Exception:
       sheet = spreadsheet.add_worksheet(title="Users", rows="100", cols="4")
       sheet.append_row(["Username", "Password Hash", "Organization", "Role"])
+    
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
+    
     if df.empty or "Username" not in df.columns or len(df) == 0:
       sheet.clear()
       sheet.append_row(["Username", "Password Hash", "Organization", "Role"])
       default_pw_hash = hash_password("securepassword123")
-      managers_list = [
-          ["manager_apollo", default_pw_hash, "Apollo Community", "manager"],
-          ["principal_xavier", default_pw_hash, "St. Xavier Enclave", "manager"],
-          ["manager_rotary", default_pw_hash, "Rotary Club Hub", "manager"],
-          ["manager_tech", default_pw_hash, "TechCorp Town", "manager"],
-          ["manager_metro", default_pw_hash, "Metro Residents", "manager"],
+      
+      # 6 Admin accounts
+      admins_list = [
+          ["admin_blockA", default_pw_hash, "Block A", "manager"],
+          ["admin_blockB", default_pw_hash, "Block B", "manager"],
+          ["admin_blockC", default_pw_hash, "Block C", "manager"],
+          ["admin_blockD", default_pw_hash, "Block D", "manager"],
+          ["admin_blockE", default_pw_hash, "Block E", "manager"],
+          ["admin_association", default_pw_hash, "Association", "manager"],
       ]
-      for m in managers_list:
-        sheet.append_row(m)
+      
+      # 18 Member accounts (6 orgs * 3 members)
+      members_list = []
+      orgs = ["Block A", "Block B", "Block C", "Block D", "Block E", "Association"]
+      for org in orgs:
+        org_slug = org.replace(" ", "")
+        for i in range(1, 4):
+          members_list.append([f"member_{org_slug}_{i}", default_pw_hash, org, "member"])
+          
+      all_users = admins_list + members_list
+      for u in all_users:
+        sheet.append_row(u)
+        
       data = sheet.get_all_records()
       df = pd.DataFrame(data)
+      
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("")
   except Exception as e:
+    st.error(f"CRITICAL USERS SHEET ERROR: {e}")
     return pd.DataFrame(
         columns=["Username", "Password Hash", "Organization", "Role"]
     )
@@ -336,7 +354,7 @@ def load_polls_data():
     if df.empty or "Poll ID" not in df.columns:
       sheet.clear()
       sheet.append_row(["Poll ID", "Organization", "Question", "Options"])
-      sheet.append_row(["1", "St. Xavier Enclave", "Should we organize the upcoming Annual Winter Gala in the Community Clubhouse lawn?", "Yes, absolutely! 🎉|No, let's keep it indoors 🏢|Neutral / Undecided 🤷‍♂️"])
+      sheet.append_row(["1", "Block A", "Should we organize the upcoming Annual Winter Gala in the Community Clubhouse lawn?", "Yes, absolutely! 🎉|No, let's keep it indoors 🏢|Neutral / Undecided 🤷‍♂️"])
       df = pd.DataFrame(sheet.get_all_records())
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("")
@@ -358,7 +376,7 @@ def load_locality_data():
     if df.empty or "Item ID" not in df.columns:
       sheet.clear()
       sheet.append_row(["Item ID", "Organization", "Category", "Title & Details", "Window"])
-      sheet.append_row(["1", "St. Xavier Enclave", "Attractions", "Community Clubhouse Lawn & Garden Hub\nOpen daily for residents.", "All Day"])
+      sheet.append_row(["1", "Block A", "Attractions", "Community Clubhouse Lawn & Garden Hub\nOpen daily for residents.", "All Day"])
       df = pd.DataFrame(sheet.get_all_records())
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("")
@@ -392,6 +410,7 @@ if not st.session_state["authenticated"]:
       <div style="text-align: center; padding: 40px 20px;">
           <h1 style="color: #0d9488; font-weight: 700;">🏙️ TogetheSpace v0.3</h1>
           <h3 style="color: #64748b; font-weight: 400;">Smart Community Hub & Resident Portal</h3>
+          <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">6 Admin Portals & 18 Member Accounts Configured</p>
       </div>
       """,
       unsafe_allow_html=True,
@@ -404,7 +423,6 @@ if not st.session_state["authenticated"]:
       clean_user = username_input.strip()
       hashed_input_pw = hash_password(password_input)
       df_users = load_users_data()
-        st.write("DEBUG - What Python sees in Users sheet:", df_users)
       user_row = (
           df_users[df_users["Username"].astype(str).str.strip() == clean_user]
           if not df_users.empty
