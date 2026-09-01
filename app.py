@@ -52,8 +52,7 @@ SCOPES = [
 ]
 
 @st.cache_resource
-def @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds):
+def get_gspread_client():
   creds_dict = dict(st.secrets["gcp_service_account"])
   if "private_key" in creds_dict:
     creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
@@ -100,8 +99,7 @@ def decode_base64_image(b64_str):
 @st.cache_data(ttl=300)
 def load_master_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     sheet = client.open_by_key(MASTER_SHEET_ID).sheet1
     rows = sheet.get_all_values()
     if not rows or len(rows) < 2:
@@ -139,8 +137,7 @@ def load_users_data():
 @st.cache_data(ttl=30)
 def load_notices_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     try:
       sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Notices")
     except Exception:
@@ -156,8 +153,7 @@ def load_notices_data():
 @st.cache_data(ttl=30)
 def load_posts_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     try:
       sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Posts")
     except Exception:
@@ -173,8 +169,7 @@ def load_posts_data():
 @st.cache_data(ttl=30)
 def load_likes_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("Likes")
@@ -195,8 +190,7 @@ def load_likes_data():
 @st.cache_data(ttl=30)
 def load_comments_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("Comments")
@@ -217,8 +211,7 @@ def load_comments_data():
 @st.cache_data(ttl=30)
 def load_private_messages_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("PrivateMessages")
@@ -240,8 +233,7 @@ def load_private_messages_data():
 @st.cache_data(ttl=30)
 def load_classifieds_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("Classifieds")
@@ -262,8 +254,7 @@ def load_classifieds_data():
 @st.cache_data(ttl=30)
 def load_tickets_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("MaintenanceTickets")
@@ -284,8 +275,7 @@ def load_tickets_data():
 @st.cache_data(ttl=30)
 def load_bookings_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("AmenityBookings")
@@ -306,8 +296,7 @@ def load_bookings_data():
 @st.cache_data(ttl=30)
 def load_safety_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("SafetyAlerts")
@@ -328,8 +317,7 @@ def load_safety_data():
 @st.cache_data(ttl=30)
 def load_polls_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("CommunityPolls")
@@ -351,8 +339,7 @@ def load_polls_data():
 @st.cache_data(ttl=30)
 def load_locality_data():
   try:
-    client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+    client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("LocalityAttractions")
@@ -644,8 +631,7 @@ else:
               if notice_title.strip() and notice_content.strip():
                 try:
                   image_data_str = process_image_to_base64(notice_image) if notice_image else ""
-                  client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+                  client = get_gspread_client()
                   notice_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Notices")
                   new_id = str(len(df_notices) + 1) if not df_notices.empty else "1"
                   today_date = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -688,8 +674,7 @@ else:
           if user_message.strip() or post_image is not None:
             try:
               image_str = process_image_to_base64(post_image) if post_image else ""
-              client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+              client = get_gspread_client()
               posts_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Posts")
               new_id = str(len(df_posts) + 1) if not df_posts.empty else "1"
               timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -734,8 +719,7 @@ else:
             like_lbl = f"❤️ {like_count} Liked" if user_liked else f"👍 {like_count} Like"
             if st.button(like_lbl, key=f"like_{post_id}"):
               try:
-                client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+                client = get_gspread_client()
                 likes_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Likes")
                 if user_liked:
                   cell = likes_sheet.find(current_user)
@@ -762,8 +746,7 @@ else:
               ctxt = st.text_input("Write a comment...", key=f"in_c_{post_id}")
               if st.form_submit_button("Send Comment") and ctxt.strip():
                 try:
-                  client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+                  client = get_gspread_client()
                   cs = client.open_by_key(MASTER_SHEET_ID).worksheet("Comments")
                   cs.append_row([str(post_id), current_user, ctxt.strip(), datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
                   st.cache_data.clear()
@@ -788,8 +771,7 @@ else:
       else:
         recipient = st.selectbox("Select Neighbor to Chat", org_members)
         if recipient:
-          client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+          client = get_gspread_client()
           pm_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("PrivateMessages")
           df_pm = load_private_messages_data()
           chat_filter = df_pm[
@@ -838,8 +820,7 @@ else:
         c_contact = st.text_input("Contact Phone / WhatsApp")
         if st.form_submit_button("Publish Classified") and c_title.strip():
           try:
-            client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+            client = get_gspread_client()
             cs = client.open_by_key(MASTER_SHEET_ID).worksheet("Classifieds")
             new_id = str(len(df_class) + 1) if not df_class.empty else "1"
             cs.append_row([new_id, user_org, current_user, c_cat, c_title.strip(), c_desc.strip(), c_contact.strip()])
@@ -873,8 +854,7 @@ else:
         if current_role == "admin" or current_user == seller:
           if st.button("🗑️ Delete Listing", key=f"del_class_{item_id}"):
             try:
-              client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+              client = get_gspread_client()
               cs = client.open_by_key(MASTER_SHEET_ID).worksheet("Classifieds")
               cell = cs.find(str(item_id))
               if cell:
@@ -905,8 +885,7 @@ else:
         t_desc = st.text_area("Issue Description & Location (e.g. Block B Lobby Light)")
         if st.form_submit_button("Submit Ticket") and t_desc.strip():
           try:
-            client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+            client = get_gspread_client()
             ts = client.open_by_key(MASTER_SHEET_ID).worksheet("MaintenanceTickets")
             new_id = str(len(df_tickets) + 1) if not df_tickets.empty else "1"
             ts.append_row([new_id, user_org, current_user, t_type, t_desc.strip(), "Open 🟡"])
@@ -943,8 +922,7 @@ else:
           with c_s1:
             if st.button("Mark In Progress 🔄", key=f"prog_{t_id}"):
               try:
-                client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+                client = get_gspread_client()
                 ts = client.open_by_key(MASTER_SHEET_ID).worksheet("MaintenanceTickets")
                 cell = ts.find(str(t_id))
                 if cell:
@@ -956,8 +934,7 @@ else:
           with c_s2:
             if st.button("Mark Resolved ✅", key=f"res_{t_id}"):
               try:
-                client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+                client = get_gspread_client()
                 ts = client.open_by_key(MASTER_SHEET_ID).worksheet("MaintenanceTickets")
                 cell = ts.find(str(t_id))
                 if cell:
@@ -988,8 +965,7 @@ else:
         purpose = st.text_input("Purpose of Booking (e.g. Birthday Party, Tennis Match)")
         if st.form_submit_button("Confirm Booking") and purpose.strip():
           try:
-            client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+            client = get_gspread_client()
             bs = client.open_by_key(MASTER_SHEET_ID).worksheet("AmenityBookings")
             new_id = str(len(df_bks) + 1) if not df_bks.empty else "1"
             bs.append_row([new_id, user_org, current_user, amenity, str(slot_date), purpose.strip()])
@@ -1022,8 +998,7 @@ else:
         if current_role == "admin" or current_user == resident:
           if st.button("Cancel Booking", key=f"del_bk_{b_id}"):
             try:
-              client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+              client = get_gspread_client()
               bs = client.open_by_key(MASTER_SHEET_ID).worksheet("AmenityBookings")
               cell = bs.find(str(b_id))
               if cell:
@@ -1053,8 +1028,7 @@ else:
         s_msg = st.text_area("Alert Message & Instructions")
         if st.form_submit_button("Broadcast Alert Now") and s_msg.strip():
           try:
-            client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+            client = get_gspread_client()
             ss = client.open_by_key(MASTER_SHEET_ID).worksheet("SafetyAlerts")
             new_id = str(len(df_safety) + 1) if not df_safety.empty else "1"
             ss.append_row([new_id, user_org, current_user, sev, s_msg.strip()])
@@ -1169,8 +1143,7 @@ else:
       edited_org_df = st.data_editor(df_org, num_rows="dynamic", use_container_width=True)
       if st.button("Save Directory Changes"):
         try:
-          client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+          client = get_gspread_client()
           sheet = client.open_by_key(MASTER_SHEET_ID).sheet1
           edited_org_df["Organization"] = user_org
           df_others = df_master[df_master["Organization"].astype(str).str.strip().str.lower() != str(user_org).strip().lower()] if not df_master.empty else pd.DataFrame()
@@ -1187,8 +1160,7 @@ else:
         u_pass = st.text_input("Temporary Password", type="password")
         if st.form_submit_button("Create Account") and u_name.strip():
           try:
-            client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+            client = get_gspread_client()
             us = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
             us.append_row([u_name.strip(), hash_password(u_pass), user_org, "resident"])
             st.cache_data.clear()
@@ -1207,8 +1179,7 @@ else:
           new_p = st.text_input("New Password", type="password")
           if st.form_submit_button("Reset Password") and new_p:
             try:
-              client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+              client = get_gspread_client()
               us = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
               cell = us.find(sel_u)
               if cell:
@@ -1227,8 +1198,7 @@ else:
         del_u = st.selectbox("Select Resident to Remove", usernames)
         if st.button("Revoke Resident Access"):
           try:
-            client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+            client = get_gspread_client()
             us = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
             cell = us.find(del_u)
             if cell:
@@ -1248,8 +1218,7 @@ else:
         if submit_poll:
           if poll_q.strip() and poll_opts.strip():
             try:
-              client = @st.cache_resource def get_gspread_client():   creds_dict = dict(st.secrets["gcp_service_account"])   pk = creds_dict.get("private_key", "")   # Robustly handle both literal escape sequences and actual newlines   if "\n" in pk:     pk = pk.replace("\n", "
-")   creds_dict["private_key"] = pk   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)   return gspread.authorize(creds)
+              client = get_gspread_client()
               try:
                 ps = client.open_by_key(MASTER_SHEET_ID).worksheet("CommunityPolls")
               except Exception:
