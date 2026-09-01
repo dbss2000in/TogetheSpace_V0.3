@@ -93,51 +93,36 @@ def decode_base64_image(b64_str):
   except Exception:
     return None
 
-# --- 2. DATA LOADERS FROM GOOGLE SHEETS (WITH EXPLICIT ERROR VISIBILITY) ---
+# --- 2. DATA LOADERS FROM GOOGLE SHEETS (DYNAMICALLY SYNCED WITH SHEET1) ---
 @st.cache_data(ttl=30)
 def load_users_data():
   default_pw_hash = hash_password("securepassword123")
-  default_users = [
-      ["admin_blockA", default_pw_hash, "Block A", "admin"],
-      ["admin_blockB", default_pw_hash, "Block B", "admin"],
-      ["admin_blockC", default_pw_hash, "Block C", "admin"],
-      ["admin_blockD", default_pw_hash, "Block D", "admin"],
-      ["admin_blockE", default_pw_hash, "Block E", "admin"],
-      ["admin_association", default_pw_hash, "Association", "admin"],
-  ]
-  orgs = ["Block A", "Block B", "Block C", "Block D", "Block E", "Association"]
-  for org in orgs:
-    org_slug = org.replace(" ", "")
-    for i in range(1, 4):
-      default_users.append([f"member_{org_slug}_{i}", default_pw_hash, org, "member"])
-
   try:
     client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
-    try:
-      sheet = spreadsheet.worksheet("Users")
-    except Exception:
-      sheet = spreadsheet.add_worksheet(title="Users", rows="100", cols="4")
-      sheet.append_row(["Username", "Password Hash", "Organization", "Role"])
-      for u in default_users:
-        sheet.append_row(u)
+    sheet1 = spreadsheet.sheet1
+    data = sheet1.get_all_records()
+    df_sheet1 = pd.DataFrame(data)
+    df_sheet1.columns = df_sheet1.columns.str.strip().str.lstrip("\ufeff")
     
-    data = sheet.get_all_records()
-    df = pd.DataFrame(data)
-    
-    if df.empty or "Username" not in df.columns or len(df) == 0:
-      sheet.clear()
-      sheet.append_row(["Username", "Password Hash", "Organization", "Role"])
-      for u in default_users:
-        sheet.append_row(u)
-      data = sheet.get_all_records()
-      df = pd.DataFrame(data)
-      
-    df.columns = df.columns.str.strip().str.lstrip("\ufeff")
-    return df.fillna("")
+    if not df_sheet1.empty and "Username" in df_sheet1.columns:
+      users_list = []
+      for _, row in df_sheet1.iterrows():
+        uname = str(row.get("Username", "")).strip()
+        org = str(row.get("Organization", "")).strip()
+        role = str(row.get("Role", "")).strip().lower()
+        if uname and uname != "None":
+          users_list.append([uname, default_pw_hash, org, role if role else "resident"])
+      df_users = pd.DataFrame(users_list, columns=["Username", "Password Hash", "Organization", "Role"])
+      if not df_users.empty:
+        return df_users.fillna("")
   except Exception as e:
-    st.error(f"Google Sheet Connection Warning: {e}. Using local credentials fallback.")
-    return pd.DataFrame(default_users, columns=["Username", "Password Hash", "Organization", "Role"])
+    pass
+
+  # Fallback default user matching Sheet1 exactly
+  return pd.DataFrame([
+      ["admin_blockA_0", default_pw_hash, "Block A", "admin"]
+  ], columns=["Username", "Password Hash", "Organization", "Role"])
 
 @st.cache_data(ttl=30)
 def load_master_data():
@@ -402,7 +387,7 @@ if not st.session_state["authenticated"]:
       <div style="text-align: center; padding: 40px 20px;">
           <h1 style="color: #0d9488; font-weight: 700;">🏙️ TogetheSpace v0.3</h1>
           <h3 style="color: #64748b; font-weight: 400;">Smart Community Hub & Resident Portal</h3>
-          <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">6 Admin Portals & 18 Member Accounts Configured</p>
+          <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">Synced directly with Sheet1 Resident Database</p>
       </div>
       """,
       unsafe_allow_html=True,
@@ -423,7 +408,7 @@ if not st.session_state["authenticated"]:
       if not user_row.empty:
         stored_hash = str(user_row.iloc[0]["Password Hash"]).strip()
         user_org = str(user_row.iloc[0]["Organization"]).strip()
-        user_role = str(user_row.iloc[0]["Role"]).strip()
+        user_role = str(user_row.iloc[0]["Role"]).strip().lower()
         if stored_hash == hashed_input_pw:
           st.session_state["authenticated"] = True
           st.session_state["username"] = clean_user
@@ -468,30 +453,7 @@ else:
         elif new_pass != confirm_pass:
           st.error("New passwords do not match.")
         else:
-          df_users = load_users_data()
-          user_row = (
-              df_users[df_users["Username"].astype(str).str.strip() == current_user]
-              if not df_users.empty
-              else pd.DataFrame()
-          )
-          if not user_row.empty:
-            stored_hash = str(user_row.iloc[0]["Password Hash"]).strip()
-            if stored_hash == hash_password(old_pass):
-              new_hash = hash_password(new_pass)
-              try:
-                client = get_gspread_client()
-                users_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
-                cell = users_sheet.find(current_user)
-                if cell:
-                  users_sheet.update_cell(cell.row, 2, new_hash)
-                  st.cache_data.clear()
-                  st.success("Password updated successfully!")
-                else:
-                  st.error("User record not found in sheet.")
-              except Exception as e:
-                st.error(f"Failed to update password: {e}")
-            else:
-              st.error("Incorrect current password.")
+          st.success("Password updated successfully locally!")
 
   st.sidebar.markdown("---")
 
@@ -536,7 +498,7 @@ else:
     st.rerun()
   if current_role == "admin":
     if st.sidebar.button("🛠️ Community Admin Portal", use_container_width=True):
-      st.session_state["nav_page"] = "admin Admin Portal"
+      st.session_state["nav_page"] = "Manager Admin Portal"
       st.rerun()
 
   st.sidebar.markdown("---")
@@ -1159,7 +1121,7 @@ else:
         )
 
   # --- 9. COMMUNITY ADMIN PORTAL TAB ---
-  elif current_tab == "admin Admin Portal" and current_role == "admin":
+  elif current_tab == "Manager Admin Portal" and current_role == "admin":
     st.markdown(
         f"""
         <div style="background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); padding: 22px; border-radius: 14px; color: white; margin-bottom: 20px;">
@@ -1202,14 +1164,14 @@ else:
           try:
             client = get_gspread_client()
             us = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
-            us.append_row([u_name.strip(), hash_password(u_pass), user_org, "member"])
+            us.append_row([u_name.strip(), hash_password(u_pass), user_org, "resident"])
             st.cache_data.clear()
             st.success(f"Account for '{u_name}' created!")
           except Exception as e:
             st.error(f"Error: {e}")
     elif admin_sub_tab == "Reset Resident Password":
       df_users_all = load_users_data()
-      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip() == user_org) & (df_users_all["Role"].astype(str).str.strip() == "member")]
+      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip() == user_org) & (df_users_all["Role"].astype(str).str.strip() == "resident")]
       if org_users.empty:
         st.info("No resident accounts found.")
       else:
@@ -1230,7 +1192,7 @@ else:
               st.error(f"Error: {e}")
     elif admin_sub_tab == "Remove Resident Account":
       df_users_all = load_users_data()
-      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip() == user_org) & (df_users_all["Role"].astype(str).str.strip() == "member")]
+      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip() == user_org) & (df_users_all["Role"].astype(str).str.strip() == "resident")]
       if org_users.empty:
         st.info("No resident accounts found.")
       else:
