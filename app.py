@@ -54,15 +54,10 @@ SCOPES = [
 
 @st.cache_resource
 def get_gspread_client():
-    """
-    Decodes the Base64-encoded Google Service Account JSON from Streamlit Secrets
-    and initializes the gspread authorized client.
-    """
     raw_b64 = st.secrets["GCP_JSON_BASE64"]
     json_str = base64.b64decode(raw_b64).decode("utf-8")
     creds_dict = json.loads(json_str)
     
-    # Clean and normalize private key if passed as string
     if "private_key" in creds_dict and isinstance(creds_dict["private_key"], str):
         pk = creds_dict["private_key"]
         pk = pk.replace("\\n", "\n").replace("\r\n", "\n")
@@ -81,7 +76,6 @@ def get_gspread_client():
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     return gspread.authorize(creds)
 
-# Retrieve Sheet ID safely from secrets
 MASTER_SHEET_ID = st.secrets["SHEET_ID"]
 
 def hash_password(password):
