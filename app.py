@@ -93,9 +93,24 @@ def decode_base64_image(b64_str):
   except Exception:
     return None
 
-# --- 2. DATA LOADERS FROM GOOGLE SHEETS ---
+# --- 2. DATA LOADERS FROM GOOGLE SHEETS (WITH ROBUST FALLBACK) ---
 @st.cache_data(ttl=30)
 def load_users_data():
+  default_pw_hash = hash_password("securepassword123")
+  default_users = [
+      ["admin_blockA", default_pw_hash, "Block A", "manager"],
+      ["admin_blockB", default_pw_hash, "Block B", "manager"],
+      ["admin_blockC", default_pw_hash, "Block C", "manager"],
+      ["admin_blockD", default_pw_hash, "Block D", "manager"],
+      ["admin_blockE", default_pw_hash, "Block E", "manager"],
+      ["admin_association", default_pw_hash, "Association", "manager"],
+  ]
+  orgs = ["Block A", "Block B", "Block C", "Block D", "Block E", "Association"]
+  for org in orgs:
+    org_slug = org.replace(" ", "")
+    for i in range(1, 4):
+      default_users.append([f"member_{org_slug}_{i}", default_pw_hash, org, "member"])
+
   try:
     client = get_gspread_client()
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
@@ -104,6 +119,8 @@ def load_users_data():
     except Exception:
       sheet = spreadsheet.add_worksheet(title="Users", rows="100", cols="4")
       sheet.append_row(["Username", "Password Hash", "Organization", "Role"])
+      for u in default_users:
+        sheet.append_row(u)
     
     data = sheet.get_all_records()
     df = pd.DataFrame(data)
@@ -111,40 +128,16 @@ def load_users_data():
     if df.empty or "Username" not in df.columns or len(df) == 0:
       sheet.clear()
       sheet.append_row(["Username", "Password Hash", "Organization", "Role"])
-      default_pw_hash = hash_password("securepassword123")
-      
-      # 6 Admin accounts
-      admins_list = [
-          ["admin_blockA", default_pw_hash, "Block A", "manager"],
-          ["admin_blockB", default_pw_hash, "Block B", "manager"],
-          ["admin_blockC", default_pw_hash, "Block C", "manager"],
-          ["admin_blockD", default_pw_hash, "Block D", "manager"],
-          ["admin_blockE", default_pw_hash, "Block E", "manager"],
-          ["admin_association", default_pw_hash, "Association", "manager"],
-      ]
-      
-      # 18 Member accounts (6 orgs * 3 members)
-      members_list = []
-      orgs = ["Block A", "Block B", "Block C", "Block D", "Block E", "Association"]
-      for org in orgs:
-        org_slug = org.replace(" ", "")
-        for i in range(1, 4):
-          members_list.append([f"member_{org_slug}_{i}", default_pw_hash, org, "member"])
-          
-      all_users = admins_list + members_list
-      for u in all_users:
+      for u in default_users:
         sheet.append_row(u)
-        
       data = sheet.get_all_records()
       df = pd.DataFrame(data)
       
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("")
   except Exception as e:
-    st.error(f"CRITICAL USERS SHEET ERROR: {e}")
-    return pd.DataFrame(
-        columns=["Username", "Password Hash", "Organization", "Role"]
-    )
+    # Fallback to local default users so login always works instantly
+    return pd.DataFrame(default_users, columns=["Username", "Password Hash", "Organization", "Role"])
 
 @st.cache_data(ttl=30)
 def load_master_data():
@@ -156,7 +149,6 @@ def load_master_data():
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("None")
   except Exception as e:
-    st.error(f"Error connecting to Google Sheets Directory: {e}")
     return pd.DataFrame()
 
 @st.cache_data(ttl=30)
@@ -1158,7 +1150,7 @@ else:
         wnd = row.get("Window", "")
         st.markdown(
             f"""
-            <div style="background-color: #ffffff; padding: 18px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 14px;">
+            <div style="background-color: #ffffff; padding: 18px; border-radius: 10px; border: 1.5px solid #cbd5e1; margin-bottom: 14px;">
                 <span style="background-color: #0d9488; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px;">{cat} ({wnd})</span>
                 <p style="margin: 10px 0 0 0; white-space: pre-wrap; font-size: 15px;">{details}</p>
             </div>
@@ -1242,6 +1234,7 @@ else:
       if org_users.empty:
         st.info("No resident accounts found.")
       else:
+      
         usernames = org_users["Username"].astype(str).str.strip().tolist()
         del_u = st.selectbox("Select Resident to Remove", usernames)
         if st.button("Revoke Resident Access"):
