@@ -93,7 +93,7 @@ def decode_base64_image(b64_str):
   except Exception:
     return None
 
-# --- 2. DATA LOADERS FROM GOOGLE SHEETS (WITH ROBUST FALLBACK) ---
+# --- 2. DATA LOADERS FROM GOOGLE SHEETS (WITH EXPLICIT ERROR VISIBILITY) ---
 @st.cache_data(ttl=30)
 def load_users_data():
   default_pw_hash = hash_password("securepassword123")
@@ -136,7 +136,7 @@ def load_users_data():
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("")
   except Exception as e:
-    # Fallback to local default users so login always works instantly
+    st.error(f"Google Sheet Connection Warning: {e}. Using local credentials fallback.")
     return pd.DataFrame(default_users, columns=["Username", "Password Hash", "Organization", "Role"])
 
 @st.cache_data(ttl=30)
@@ -1234,7 +1234,6 @@ else:
       if org_users.empty:
         st.info("No resident accounts found.")
       else:
-      
         usernames = org_users["Username"].astype(str).str.strip().tolist()
         del_u = st.selectbox("Select Resident to Remove", usernames)
         if st.button("Revoke Resident Access"):
