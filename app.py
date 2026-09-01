@@ -119,7 +119,6 @@ def load_users_data():
   except Exception as e:
     pass
 
-  # Fallback default user matching Sheet1 exactly
   return pd.DataFrame([
       ["admin_blockA_0", default_pw_hash, "Block A", "admin"]
   ], columns=["Username", "Password Hash", "Organization", "Role"])
@@ -538,7 +537,7 @@ else:
         name = row.get("Full Name", "Resident")
         blood = row.get("Blood Group", "N/A")
         bio_text = str(row.get("Bio", "")).strip()
-        member_role = row.get("Role", "Member")
+        member_role = row.get("Role", "Resident")
         birthday = str(row.get("Birthday", "")).strip()
         timezone = row.get("Timezone", "")
         notes = row.get("Notes", "")
