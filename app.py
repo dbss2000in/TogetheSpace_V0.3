@@ -3,6 +3,7 @@ import datetime
 from datetime import datetime
 import hashlib
 import io
+import json
 import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
@@ -45,27 +46,51 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- 1. CONFIGURATION & SECURE GOOGLE DRIVE CONNECTION ---
+# --- 1. CONFIGURATION & ROBUST CREDENTIAL LOADER ---
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
 ]
 
 @st.cache_resource
-def get_gspread_client():
-  creds_dict = dict(st.secrets["gcp_service_account"])
-  pk = creds_dict.get("private_key", "")
-  
-  if isinstance(pk, str):
+def get_gspread_client(uploaded_creds_dict=None):
+  """
+  Attempts to load credentials from an uploaded JSON file first,
+  falling back to st.secrets if available.
+  """
+  if uploaded_creds_dict:
+    creds_dict = uploaded_creds_dict
+  else:
+    try:
+      creds_dict = dict(st.secrets["gcp_service_account"])
+    except Exception as e:
+      raise ValueError(f"No valid service account credentials found in secrets or upload: {e}")
+
+  # Clean and normalize private key if passed as string
+  if "private_key" in creds_dict and isinstance(creds_dict["private_key"], str):
+    pk = creds_dict["private_key"]
     pk = pk.replace("\\n", "\n").replace("\r\n", "\n")
     lines = [line.strip() for line in pk.split("\n") if line.strip()]
-    pk = "\n".join(lines) + "\n"
-    
-  creds_dict["private_key"] = pk
+    if lines and lines[0].startswith("-----BEGIN"):
+      header = lines[0]
+      footer = lines[-1]
+      body = "".join(lines[1:-1])
+      # Fix base64 padding automatically if truncated by UI
+      missing_padding = len(body) % 4
+      if missing_padding:
+        body += "=" * (4 - missing_padding)
+      wrapped_body = [body[i:i+64] for i in range(0, len(body), 64)]
+      pk = "\n".join([header] + wrapped_body + [footer]) + "\n"
+    creds_dict["private_key"] = pk
+
   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
   return gspread.authorize(creds)
 
-MASTER_SHEET_ID = st.secrets["gcp_service_account"].get("sheet_id", "1Hia-zDA8XiwwIamshR6pgrVZzOUJVG4HL-eKteD4wP4")
+# Retrieve Sheet ID safely from secrets or provide default fallback input
+try:
+  MASTER_SHEET_ID = st.secrets["gcp_service_account"].get("sheet_id", "1Hia-zDA8XiwwIamshR6pgrVZzOUJVG4HL-eKteD4wP4")
+except Exception:
+  MASTER_SHEET_ID = "1Hia-zDA8XiwwIamshR6pgrVZzOUJVG4HL-eKteD4wP4"
 
 def hash_password(password):
   return hashlib.sha256(password.encode()).hexdigest()
@@ -105,7 +130,7 @@ def decode_base64_image(b64_str):
 @st.cache_data(ttl=300)
 def load_master_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     sheet = client.open_by_key(MASTER_SHEET_ID).sheet1
     rows = sheet.get_all_values()
     if not rows or len(rows) < 2:
@@ -143,7 +168,7 @@ def load_users_data():
 @st.cache_data(ttl=30)
 def load_notices_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     try:
       sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Notices")
     except Exception:
@@ -159,7 +184,7 @@ def load_notices_data():
 @st.cache_data(ttl=30)
 def load_posts_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     try:
       sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Posts")
     except Exception:
@@ -175,7 +200,7 @@ def load_posts_data():
 @st.cache_data(ttl=30)
 def load_likes_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("Likes")
@@ -196,7 +221,7 @@ def load_likes_data():
 @st.cache_data(ttl=30)
 def load_comments_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("Comments")
@@ -217,7 +242,7 @@ def load_comments_data():
 @st.cache_data(ttl=30)
 def load_private_messages_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("PrivateMessages")
@@ -239,7 +264,7 @@ def load_private_messages_data():
 @st.cache_data(ttl=30)
 def load_classifieds_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("Classifieds")
@@ -260,7 +285,7 @@ def load_classifieds_data():
 @st.cache_data(ttl=30)
 def load_tickets_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("MaintenanceTickets")
@@ -281,7 +306,7 @@ def load_tickets_data():
 @st.cache_data(ttl=30)
 def load_bookings_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("AmenityBookings")
@@ -302,7 +327,7 @@ def load_bookings_data():
 @st.cache_data(ttl=30)
 def load_safety_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("SafetyAlerts")
@@ -323,7 +348,7 @@ def load_safety_data():
 @st.cache_data(ttl=30)
 def load_polls_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("CommunityPolls")
@@ -345,7 +370,7 @@ def load_polls_data():
 @st.cache_data(ttl=30)
 def load_locality_data():
   try:
-    client = get_gspread_client()
+    client = get_gspread_client(st.session_state.get("uploaded_creds"))
     spreadsheet = client.open_by_key(MASTER_SHEET_ID)
     try:
       sheet = spreadsheet.worksheet("LocalityAttractions")
@@ -361,7 +386,7 @@ def load_locality_data():
       df = pd.DataFrame(sheet.get_all_records())
     df.columns = df.columns.str.strip().str.lstrip("\ufeff")
     return df.fillna("")
-  except Exception:
+  except Exception as e:
     return pd.DataFrame(columns=["Item ID", "Organization", "Category", "Title & Details", "Window"])
 
 # --- 3. SESSION STATE & URL QUERY PARAMS PERSISTENCE ---
@@ -384,18 +409,34 @@ if "saved_posts" not in st.session_state:
 if "nav_page" not in st.session_state:
   st.session_state["nav_page"] = "Directory"
 
+if "uploaded_creds" not in st.session_state:
+  st.session_state["uploaded_creds"] = None
+
 # --- 4. AUTHENTICATION / LOGIN VIEW ---
 if not st.session_state["authenticated"]:
   st.markdown(
       """
-      <div style="text-align: center; padding: 40px 20px;">
+      <div style="text-align: center; padding: 30px 20px 10px 20px;">
           <h1 style="color: #0d9488; font-weight: 700;">🏙️ TogetheSpace v0.3</h1>
           <h3 style="color: #64748b; font-weight: 400;">Smart Community Hub & Resident Portal</h3>
-          <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">Synced directly with Sheet1 Resident Database</p>
+          <p style="color: #94a3b8; font-size: 14px; margin-top: 5px;">Synced directly with Google Sheets Directory</p>
       </div>
       """,
       unsafe_allow_html=True,
   )
+  
+  # --- CREDENTIAL FILE UPLOADER BACKUP (Bypasses Secrets UI Corruption) ---
+  with st.expander("🛠️ Having Secret/PEM Issues? Upload Service Account JSON File Directly", expanded=False):
+    st.info("If Streamlit Cloud Secrets keeps throwing padding errors, upload your original service account `.json` file here:")
+    uploaded_json = st.file_uploader("Upload Google Service Account JSON", type=["json"])
+    if uploaded_json is not None:
+      try:
+        creds_data = json.load(uploaded_json)
+        st.session_state["uploaded_creds"] = creds_data
+        st.success("Service account JSON loaded successfully into session! You can now log in below.")
+      except Exception as e:
+        st.error(f"Invalid JSON file: {e}")
+
   with st.form("login_form"):
     username_input = st.text_input("Username")
     password_input = st.text_input("Password", type="password")
@@ -511,6 +552,7 @@ else:
     st.session_state["username"] = ""
     st.session_state["role"] = ""
     st.session_state["org_name"] = ""
+    st.session_state["uploaded_creds"] = None
     st.query_params.clear()
     st.rerun()
 
@@ -637,7 +679,7 @@ else:
               if notice_title.strip() and notice_content.strip():
                 try:
                   image_data_str = process_image_to_base64(notice_image) if notice_image else ""
-                  client = get_gspread_client()
+                  client = get_gspread_client(st.session_state.get("uploaded_creds"))
                   notice_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Notices")
                   new_id = str(len(df_notices) + 1) if not df_notices.empty else "1"
                   today_date = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -680,7 +722,7 @@ else:
           if user_message.strip() or post_image is not None:
             try:
               image_str = process_image_to_base64(post_image) if post_image else ""
-              client = get_gspread_client()
+              client = get_gspread_client(st.session_state.get("uploaded_creds"))
               posts_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Posts")
               new_id = str(len(df_posts) + 1) if not df_posts.empty else "1"
               timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -725,7 +767,7 @@ else:
             like_lbl = f"❤️ {like_count} Liked" if user_liked else f"👍 {like_count} Like"
             if st.button(like_lbl, key=f"like_{post_id}"):
               try:
-                client = get_gspread_client()
+                client = get_gspread_client(st.session_state.get("uploaded_creds"))
                 likes_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("Likes")
                 if user_liked:
                   cell = likes_sheet.find(current_user)
@@ -752,7 +794,7 @@ else:
               ctxt = st.text_input("Write a comment...", key=f"in_c_{post_id}")
               if st.form_submit_button("Send Comment") and ctxt.strip():
                 try:
-                  client = get_gspread_client()
+                  client = get_gspread_client(st.session_state.get("uploaded_creds"))
                   cs = client.open_by_key(MASTER_SHEET_ID).worksheet("Comments")
                   cs.append_row([str(post_id), current_user, ctxt.strip(), datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
                   st.cache_data.clear()
@@ -777,7 +819,7 @@ else:
       else:
         recipient = st.selectbox("Select Neighbor to Chat", org_members)
         if recipient:
-          client = get_gspread_client()
+          client = get_gspread_client(st.session_state.get("uploaded_creds"))
           pm_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("PrivateMessages")
           df_pm = load_private_messages_data()
           chat_filter = df_pm[
@@ -826,7 +868,7 @@ else:
         c_contact = st.text_input("Contact Phone / WhatsApp")
         if st.form_submit_button("Publish Classified") and c_title.strip():
           try:
-            client = get_gspread_client()
+            client = get_gspread_client(st.session_state.get("uploaded_creds"))
             cs = client.open_by_key(MASTER_SHEET_ID).worksheet("Classifieds")
             new_id = str(len(df_class) + 1) if not df_class.empty else "1"
             cs.append_row([new_id, user_org, current_user, c_cat, c_title.strip(), c_desc.strip(), c_contact.strip()])
@@ -860,7 +902,7 @@ else:
         if current_role == "admin" or current_user == seller:
           if st.button("🗑️ Delete Listing", key=f"del_class_{item_id}"):
             try:
-              client = get_gspread_client()
+              client = get_gspread_client(st.session_state.get("uploaded_creds"))
               cs = client.open_by_key(MASTER_SHEET_ID).worksheet("Classifieds")
               cell = cs.find(str(item_id))
               if cell:
@@ -891,7 +933,7 @@ else:
         t_desc = st.text_area("Issue Description & Location (e.g. Block B Lobby Light)")
         if st.form_submit_button("Submit Ticket") and t_desc.strip():
           try:
-            client = get_gspread_client()
+            client = get_gspread_client(st.session_state.get("uploaded_creds"))
             ts = client.open_by_key(MASTER_SHEET_ID).worksheet("MaintenanceTickets")
             new_id = str(len(df_tickets) + 1) if not df_tickets.empty else "1"
             ts.append_row([new_id, user_org, current_user, t_type, t_desc.strip(), "Open 🟡"])
@@ -928,7 +970,7 @@ else:
           with c_s1:
             if st.button("Mark In Progress 🔄", key=f"prog_{t_id}"):
               try:
-                client = get_gspread_client()
+                client = get_gspread_client(st.session_state.get("uploaded_creds"))
                 ts = client.open_by_key(MASTER_SHEET_ID).worksheet("MaintenanceTickets")
                 cell = ts.find(str(t_id))
                 if cell:
@@ -940,7 +982,7 @@ else:
           with c_s2:
             if st.button("Mark Resolved ✅", key=f"res_{t_id}"):
               try:
-                client = get_gspread_client()
+                client = get_gspread_client(st.session_state.get("uploaded_creds"))
                 ts = client.open_by_key(MASTER_SHEET_ID).worksheet("MaintenanceTickets")
                 cell = ts.find(str(t_id))
                 if cell:
@@ -971,7 +1013,7 @@ else:
         purpose = st.text_input("Purpose of Booking (e.g. Birthday Party, Tennis Match)")
         if st.form_submit_button("Confirm Booking") and purpose.strip():
           try:
-            client = get_gspread_client()
+            client = get_gspread_client(st.session_state.get("uploaded_creds"))
             bs = client.open_by_key(MASTER_SHEET_ID).worksheet("AmenityBookings")
             new_id = str(len(df_bks) + 1) if not df_bks.empty else "1"
             bs.append_row([new_id, user_org, current_user, amenity, str(slot_date), purpose.strip()])
@@ -1004,7 +1046,7 @@ else:
         if current_role == "admin" or current_user == resident:
           if st.button("Cancel Booking", key=f"del_bk_{b_id}"):
             try:
-              client = get_gspread_client()
+              client = get_gspread_client(st.session_state.get("uploaded_creds"))
               bs = client.open_by_key(MASTER_SHEET_ID).worksheet("AmenityBookings")
               cell = bs.find(str(b_id))
               if cell:
@@ -1034,7 +1076,7 @@ else:
         s_msg = st.text_area("Alert Message & Instructions")
         if st.form_submit_button("Broadcast Alert Now") and s_msg.strip():
           try:
-            client = get_gspread_client()
+            client = get_gspread_client(st.session_state.get("uploaded_creds"))
             ss = client.open_by_key(MASTER_SHEET_ID).worksheet("SafetyAlerts")
             new_id = str(len(df_safety) + 1) if not df_safety.empty else "1"
             ss.append_row([new_id, user_org, current_user, sev, s_msg.strip()])
@@ -1149,7 +1191,7 @@ else:
       edited_org_df = st.data_editor(df_org, num_rows="dynamic", use_container_width=True)
       if st.button("Save Directory Changes"):
         try:
-          client = get_gspread_client()
+          client = get_gspread_client(st.session_state.get("uploaded_creds"))
           sheet = client.open_by_key(MASTER_SHEET_ID).sheet1
           edited_org_df["Organization"] = user_org
           df_others = df_master[df_master["Organization"].astype(str).str.strip().str.lower() != str(user_org).strip().lower()] if not df_master.empty else pd.DataFrame()
@@ -1166,7 +1208,7 @@ else:
         u_pass = st.text_input("Temporary Password", type="password")
         if st.form_submit_button("Create Account") and u_name.strip():
           try:
-            client = get_gspread_client()
+            client = get_gspread_client(st.session_state.get("uploaded_creds"))
             us = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
             us.append_row([u_name.strip(), hash_password(u_pass), user_org, "resident"])
             st.cache_data.clear()
@@ -1185,7 +1227,7 @@ else:
           new_p = st.text_input("New Password", type="password")
           if st.form_submit_button("Reset Password") and new_p:
             try:
-              client = get_gspread_client()
+              client = get_gspread_client(st.session_state.get("uploaded_creds"))
               us = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
               cell = us.find(sel_u)
               if cell:
@@ -1204,7 +1246,7 @@ else:
         del_u = st.selectbox("Select Resident to Remove", usernames)
         if st.button("Revoke Resident Access"):
           try:
-            client = get_gspread_client()
+            client = get_gspread_client(st.session_state.get("uploaded_creds"))
             us = client.open_by_key(MASTER_SHEET_ID).worksheet("Users")
             cell = us.find(del_u)
             if cell:
@@ -1224,7 +1266,7 @@ else:
         if submit_poll:
           if poll_q.strip() and poll_opts.strip():
             try:
-              client = get_gspread_client()
+              client = get_gspread_client(st.session_state.get("uploaded_creds"))
               try:
                 ps = client.open_by_key(MASTER_SHEET_ID).worksheet("CommunityPolls")
               except Exception:
