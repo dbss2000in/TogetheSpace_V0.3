@@ -98,12 +98,12 @@ def decode_base64_image(b64_str):
 def load_users_data():
   default_pw_hash = hash_password("securepassword123")
   default_users = [
-      ["admin_blockA", default_pw_hash, "Block A", "manager"],
-      ["admin_blockB", default_pw_hash, "Block B", "manager"],
-      ["admin_blockC", default_pw_hash, "Block C", "manager"],
-      ["admin_blockD", default_pw_hash, "Block D", "manager"],
-      ["admin_blockE", default_pw_hash, "Block E", "manager"],
-      ["admin_association", default_pw_hash, "Association", "manager"],
+      ["admin_blockA", default_pw_hash, "Block A", "admin"],
+      ["admin_blockB", default_pw_hash, "Block B", "admin"],
+      ["admin_blockC", default_pw_hash, "Block C", "admin"],
+      ["admin_blockD", default_pw_hash, "Block D", "admin"],
+      ["admin_blockE", default_pw_hash, "Block E", "admin"],
+      ["admin_association", default_pw_hash, "Association", "admin"],
   ]
   orgs = ["Block A", "Block B", "Block C", "Block D", "Block E", "Association"]
   for org in orgs:
@@ -534,9 +534,9 @@ else:
   if st.sidebar.button("🌟 Local Attractions & Events", use_container_width=True):
     st.session_state["nav_page"] = "Locality Attractions"
     st.rerun()
-  if current_role == "manager":
+  if current_role == "admin":
     if st.sidebar.button("🛠️ Community Admin Portal", use_container_width=True):
-      st.session_state["nav_page"] = "Manager Admin Portal"
+      st.session_state["nav_page"] = "admin Admin Portal"
       st.rerun()
 
   st.sidebar.markdown("---")
@@ -660,7 +660,7 @@ else:
     if sub_tab_choice == "📢 Community Notices":
       df_notices = load_notices_data()
       org_notices = df_notices[df_notices["Organization"].str.strip() == user_org] if not df_notices.empty else pd.DataFrame()
-      if current_role == "manager":
+      if current_role == "admin":
         with st.expander("➕ Publish Community Notice (Community Admin Only)", expanded=False):
           with st.form("notice_form", clear_on_submit=True):
             notice_title = st.text_input("Notice Title")
@@ -891,7 +891,7 @@ else:
             """,
             unsafe_allow_html=True,
         )
-        if current_role == "manager" or current_user == seller:
+        if current_role == "admin" or current_user == seller:
           if st.button("🗑️ Delete Listing", key=f"del_class_{item_id}"):
             try:
               client = get_gspread_client()
@@ -957,7 +957,7 @@ else:
             """,
             unsafe_allow_html=True,
         )
-        if current_role == "manager":
+        if current_role == "admin":
           c_s1, c_s2 = st.columns(2)
           with c_s1:
             if st.button("Mark In Progress 🔄", key=f"prog_{t_id}"):
@@ -1035,7 +1035,7 @@ else:
             """,
             unsafe_allow_html=True,
         )
-        if current_role == "manager" or current_user == resident:
+        if current_role == "admin" or current_user == resident:
           if st.button("Cancel Booking", key=f"del_bk_{b_id}"):
             try:
               client = get_gspread_client()
@@ -1159,7 +1159,7 @@ else:
         )
 
   # --- 9. COMMUNITY ADMIN PORTAL TAB ---
-  elif current_tab == "Manager Admin Portal" and current_role == "manager":
+  elif current_tab == "admin Admin Portal" and current_role == "admin":
     st.markdown(
         f"""
         <div style="background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); padding: 22px; border-radius: 14px; color: white; margin-bottom: 20px;">
