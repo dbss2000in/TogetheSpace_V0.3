@@ -93,18 +93,27 @@ def decode_base64_image(b64_str):
   except Exception:
     return None
 
-# --- 2. DATA LOADERS FROM GOOGLE SHEETS (DYNAMICALLY SYNCED WITH SHEET1) ---
+# --- 2. HIGH-PERFORMANCE DATA LOADERS ---
+@st.cache_data(ttl=300)
+def load_master_data():
+  try:
+    client = get_gspread_client()
+    sheet = client.open_by_key(MASTER_SHEET_ID).sheet1
+    rows = sheet.get_all_values()
+    if not rows or len(rows) < 2:
+      return pd.DataFrame()
+    headers = [str(h).strip().lstrip("\ufeff") for h in rows[0]]
+    df = pd.DataFrame(rows[1:], columns=headers)
+    return df.fillna("None")
+  except Exception as e:
+    st.error(f"Error connecting to Google Sheets Directory: {e}")
+    return pd.DataFrame()
+
 @st.cache_data(ttl=30)
 def load_users_data():
   default_pw_hash = hash_password("securepassword123")
   try:
-    client = get_gspread_client()
-    spreadsheet = client.open_by_key(MASTER_SHEET_ID)
-    sheet1 = spreadsheet.sheet1
-    data = sheet1.get_all_records()
-    df_sheet1 = pd.DataFrame(data)
-    df_sheet1.columns = df_sheet1.columns.str.strip().str.lstrip("\ufeff")
-    
+    df_sheet1 = load_master_data()
     if not df_sheet1.empty and "Username" in df_sheet1.columns:
       users_list = []
       for _, row in df_sheet1.iterrows():
@@ -122,18 +131,6 @@ def load_users_data():
   return pd.DataFrame([
       ["admin_blockA_0", default_pw_hash, "Block A", "admin"]
   ], columns=["Username", "Password Hash", "Organization", "Role"])
-
-@st.cache_data(ttl=30)
-def load_master_data():
-  try:
-    client = get_gspread_client()
-    sheet = client.open_by_key(MASTER_SHEET_ID).sheet1
-    data = sheet.get_all_records()
-    df = pd.DataFrame(data)
-    df.columns = df.columns.str.strip().str.lstrip("\ufeff")
-    return df.fillna("None")
-  except Exception as e:
-    return pd.DataFrame()
 
 @st.cache_data(ttl=30)
 def load_notices_data():
