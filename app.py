@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="TogetheSpace v0.3 — Community Hub", page_icon="🏙️", layout="wide"
 )
 
-# --- APP-WIDE STYLING & GORGEOUS UI/UX ---
+# --- APP-WIDE STYLING & SEA GREEN UI/UX ---
 st.markdown(
     """
     <style>
@@ -40,6 +40,17 @@ st.markdown(
     
     input, textarea, select {
         border-radius: 8px !important;
+    }
+
+    /* Soft Sea Green Theme for Expanders and Cards */
+    .streamlit-expanderHeader {
+        background-color: #e6f4f1 !important;
+        border-radius: 8px;
+    }
+    div[data-testid="stExpander"] {
+        background-color: #f0fdf4 !important;
+        border: 1px solid #99f6e4 !important;
+        border-radius: 10px !important;
     }
     </style>
     """,
@@ -420,7 +431,6 @@ if not st.session_state["authenticated"]:
     )
     
     with st.form("login_form"):
-        # Fetch available users to populate dropdown
         df_users_init = load_users_data()
         all_usernames = df_users_init["Username"].astype(str).str.strip().tolist() if not df_users_init.empty else []
         if not all_usernames:
@@ -612,12 +622,14 @@ else:
                             st.markdown(f"**Address:** [{raw_address}]({maps_url}) (Map)")
                         else:
                             st.markdown("**Address:** None")
+                        
                         phone = str(row.get("Phone Number", ""))
                         if phone and phone != "None":
                             st.markdown(f"**Phone / Call:** [{phone}](tel:{phone})")
                             st.markdown(f"**SMS:** [Send SMS](sms:{phone})")
                         else:
                             st.markdown("**Phone:** None")
+                        
                         wa_chat = str(row.get("WhatsApp Chat", ""))
                         if wa_chat and wa_chat != "None":
                             wa_digits = "".join(filter(str.isdigit, wa_chat))
@@ -625,12 +637,40 @@ else:
                             st.markdown(f"**WhatsApp Chat:** [Open Chat]({wa_url})")
                         else:
                             st.markdown("**WhatsApp Chat:** None")
+                        
                         email_raw = str(row.get("Email", "None")).strip()
                         if email_raw and email_raw != "None":
                             gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&to={email_raw}"
                             st.markdown(f"**Email:** [{email_raw}]({gmail_url})")
                         else:
                             st.markdown("**Email:** None")
+
+                        # External Social & Web Links
+                        fb = str(row.get("Facebook", "")).strip()
+                        if fb and fb != "None":
+                            fb_url = fb if fb.startswith("http") else f"https://facebook.com/{fb}"
+                            st.markdown(f"**Facebook:** [Open Profile]({fb_url})")
+
+                        ig = str(row.get("Instagram", "")).strip()
+                        if ig and ig != "None":
+                            ig_url = ig if ig.startswith("http") else f"https://instagram.com/{ig.lstrip('@')}"
+                            st.markdown(f"**Instagram:** [Open Profile]({ig_url})")
+
+                        tw = str(row.get("Twitter", "")).strip()
+                        if tw and tw != "None":
+                            tw_url = tw if tw.startswith("http") else f"https://twitter.com/{tw.lstrip('@')}"
+                            st.markdown(f"**Twitter/X:** [Open Profile]({tw_url})")
+
+                        li = str(row.get("LinkedIn", "")).strip()
+                        if li and li != "None":
+                            li_url = li if li.startswith("http") else f"https://linkedin.com/in/{li}"
+                            st.markdown(f"**LinkedIn:** [Open Profile]({li_url})")
+
+                        web = str(row.get("Website", "")).strip()
+                        if web and web != "None":
+                            web_url = web if web.startswith("http") else f"https://{web}"
+                            st.markdown(f"**Website:** [Visit Website]({web_url})")
+
                     with col2:
                         st.subheader("🚨 Medical Emergency & SOS")
                         st.error(f"""
