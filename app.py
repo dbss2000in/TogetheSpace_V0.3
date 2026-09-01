@@ -431,7 +431,7 @@ else:
   current_user = st.session_state["username"]
 
   if not df_master.empty and "Organization" in df_master.columns:
-    df_org = df_master[df_master["Organization"].str.strip() == user_org].copy()
+    df_org = df_master[df_master["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()].copy()
   else:
     df_org = pd.DataFrame()
 
@@ -462,7 +462,7 @@ else:
   unread_count = 0
   if not df_pm_all.empty and "Recipient" in df_pm_all.columns and "ReadStatus" in df_pm_all.columns:
     unread_df = df_pm_all[
-        (df_pm_all["Organization"].astype(str).str.strip() == user_org) &
+        (df_pm_all["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()) &
         (df_pm_all["Recipient"].astype(str).str.strip() == current_user) &
         (df_pm_all["ReadStatus"].astype(str).str.strip() != "Read")
     ]
@@ -621,7 +621,7 @@ else:
     st.markdown("---")
     if sub_tab_choice == "📢 Community Notices":
       df_notices = load_notices_data()
-      org_notices = df_notices[df_notices["Organization"].str.strip() == user_org] if not df_notices.empty else pd.DataFrame()
+      org_notices = df_notices[df_notices["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()] if not df_notices.empty else pd.DataFrame()
       if current_role == "admin":
         with st.expander("➕ Publish Community Notice (Community Admin Only)", expanded=False):
           with st.form("notice_form", clear_on_submit=True):
@@ -663,7 +663,7 @@ else:
       df_posts = load_posts_data()
       df_likes = load_likes_data()
       df_comments = load_comments_data()
-      org_posts = df_posts[df_posts["Organization"].str.strip() == user_org] if not df_posts.empty else pd.DataFrame()
+      org_posts = df_posts[df_posts["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()] if not df_posts.empty else pd.DataFrame()
       with st.form("crisp_post_form", clear_on_submit=True):
         user_message = st.text_area("Share with neighbors...", placeholder="What's happening in your block?", height=80)
         c1, c2 = st.columns([2, 1])
@@ -765,7 +765,7 @@ else:
           st.cache_data.clear()
           st.rerun()
       df_users_all = load_users_data()
-      org_members = df_users_all[df_users_all["Organization"].astype(str).str.strip() == user_org]["Username"].astype(str).str.strip().tolist() if not df_users_all.empty else []
+      org_members = df_users_all[df_users_all["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()]["Username"].astype(str).str.strip().tolist() if not df_users_all.empty else []
       if current_user in org_members:
         org_members.remove(current_user)
       if not org_members:
@@ -777,7 +777,7 @@ else:
           pm_sheet = client.open_by_key(MASTER_SHEET_ID).worksheet("PrivateMessages")
           df_pm = load_private_messages_data()
           chat_filter = df_pm[
-              (df_pm["Organization"].astype(str).str.strip() == user_org) &
+              (df_pm["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()) &
               (
                   ((df_pm["Sender"].astype(str).str.strip() == current_user) & (df_pm["Recipient"].astype(str).str.strip() == recipient)) |
                   ((df_pm["Sender"].astype(str).str.strip() == recipient) & (df_pm["Recipient"].astype(str).str.strip() == current_user))
@@ -813,7 +813,7 @@ else:
         unsafe_allow_html=True,
     )
     df_class = load_classifieds_data()
-    org_class = df_class[df_class["Organization"].str.strip() == user_org] if not df_class.empty else pd.DataFrame()
+    org_class = df_class[df_class["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()] if not df_class.empty else pd.DataFrame()
     with st.expander("➕ Post New Classified Item", expanded=False):
       with st.form("class_form", clear_on_submit=True):
         c_cat = st.selectbox("Category", ["For Sale", "For Rent", "Services", "Free Giveaway", "Car Pooling"])
@@ -880,7 +880,7 @@ else:
         unsafe_allow_html=True,
     )
     df_tickets = load_tickets_data()
-    org_tickets = df_tickets[df_tickets["Organization"].str.strip() == user_org] if not df_tickets.empty else pd.DataFrame()
+    org_tickets = df_tickets[df_tickets["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()] if not df_tickets.empty else pd.DataFrame()
     with st.expander("➕ Raise New Maintenance Ticket", expanded=False):
       with st.form("ticket_form", clear_on_submit=True):
         t_type = st.selectbox("Issue Category", ["Plumbing & Water", "Electrical & Lighting", "Security & Gate", "Cleanliness & Garbage", "Other Maintenance"])
@@ -959,7 +959,7 @@ else:
         unsafe_allow_html=True,
     )
     df_bks = load_bookings_data()
-    org_bks = df_bks[df_bks["Organization"].str.strip() == user_org] if not df_bks.empty else pd.DataFrame()
+    org_bks = df_bks[df_bks["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()] if not df_bks.empty else pd.DataFrame()
     with st.expander("➕ Book an Amenity", expanded=False):
       with st.form("bk_form", clear_on_submit=True):
         amenity = st.selectbox("Select Amenity", ["Clubhouse Hall", "Tennis Court", "Swimming Pool Deck", "Guest Room 1", "Barbecue Lawn"])
@@ -1023,7 +1023,7 @@ else:
         unsafe_allow_html=True,
     )
     df_safety = load_safety_data()
-    org_safety = df_safety[df_safety["Organization"].str.strip() == user_org] if not df_safety.empty else pd.DataFrame()
+    org_safety = df_safety[df_safety["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()] if not df_safety.empty else pd.DataFrame()
     with st.expander("➕ Broadcast Safety Alert", expanded=False):
       with st.form("safety_form", clear_on_submit=True):
         sev = st.selectbox("Alert Severity", ["Normal Advisory ℹ️", "Important Notice ⚠️", "URGENT EMERGENCY 🚨"])
@@ -1072,7 +1072,7 @@ else:
         unsafe_allow_html=True,
     )
     df_polls = load_polls_data()
-    org_polls = df_polls[df_polls["Organization"].str.strip() == user_org] if not df_polls.empty else pd.DataFrame()
+    org_polls = df_polls[df_polls["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()] if not df_polls.empty else pd.DataFrame()
     if org_polls.empty:
       st.info("No active community polls at the moment. Community Admin can create one from the admin portal.")
     else:
@@ -1148,7 +1148,7 @@ else:
           client = get_gspread_client()
           sheet = client.open_by_key(MASTER_SHEET_ID).sheet1
           edited_org_df["Organization"] = user_org
-          df_others = df_master[df_master["Organization"].str.strip() != user_org] if not df_master.empty else pd.DataFrame()
+          df_others = df_master[df_master["Organization"].astype(str).str.strip().str.lower() != str(user_org).strip().lower()] if not df_master.empty else pd.DataFrame()
           df_final = pd.concat([df_others, edited_org_df], ignore_index=True)
           sheet.clear()
           sheet.update([df_final.columns.values.tolist()] + df_final.values.tolist())
@@ -1171,7 +1171,7 @@ else:
             st.error(f"Error: {e}")
     elif admin_sub_tab == "Reset Resident Password":
       df_users_all = load_users_data()
-      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip() == user_org) & (df_users_all["Role"].astype(str).str.strip() == "resident")]
+      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()) & (df_users_all["Role"].astype(str).str.strip().str.lower() == "resident")]
       if org_users.empty:
         st.info("No resident accounts found.")
       else:
@@ -1192,7 +1192,7 @@ else:
               st.error(f"Error: {e}")
     elif admin_sub_tab == "Remove Resident Account":
       df_users_all = load_users_data()
-      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip() == user_org) & (df_users_all["Role"].astype(str).str.strip() == "resident")]
+      org_users = df_users_all[(df_users_all["Organization"].astype(str).str.strip().str.lower() == str(user_org).strip().lower()) & (df_users_all["Role"].astype(str).str.strip().str.lower() == "resident")]
       if org_users.empty:
         st.info("No resident accounts found.")
       else:
