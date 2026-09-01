@@ -76,12 +76,19 @@ if not st.session_state.logged_in:
   col1, col2, col3 = st.columns([1, 2, 1])
   with col2:
     with st.form("login_form"):
-      username_input = st.text_input("Username")
+      # Fetch users from sheet to populate the dropdown
+      users = load_sheet_data("Users")
+      all_usernames = [u.get("Username") for u in users if u.get("Username")]
+
+      # Fallback default if sheet is empty or unpopulated
+      if not all_usernames:
+        all_usernames = ["admin_blockA_0"]
+
+      username_input = st.selectbox("Username", all_usernames)
       password_input = st.text_input("Password", type="password")
       submit_login = st.form_submit_button("🚀 Enter Community Hub")
 
       if submit_login:
-        users = load_sheet_data("Users")
         authenticated = False
 
         for user in users:
