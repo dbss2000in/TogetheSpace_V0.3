@@ -404,6 +404,7 @@ if not st.session_state["authenticated"]:
       clean_user = username_input.strip()
       hashed_input_pw = hash_password(password_input)
       df_users = load_users_data()
+        st.write("DEBUG - What Python sees in Users sheet:", df_users)
       user_row = (
           df_users[df_users["Username"].astype(str).str.strip() == clean_user]
           if not df_users.empty
