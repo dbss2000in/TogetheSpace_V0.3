@@ -55,8 +55,18 @@ SCOPES = [
 def get_gspread_client():
   creds_dict = dict(st.secrets["gcp_service_account"])
   pk = creds_dict.get("private_key", "")
+  
+  print("--- DEBUG PRIVATE KEY ---")
+  print("Literal '\\n' found in string:", "\\n" in pk)
+  print("Total lines before replacement:", len(pk.splitlines()))
+  
   if "\\n" in pk:
     pk = pk.replace("\\n", "\n")
+    
+  print("Total lines after replacement:", len(pk.splitlines()))
+  print("First 50 characters (repr):", repr(pk[:50]))
+  print("--------------------------")
+
   creds_dict["private_key"] = pk
   creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
   return gspread.authorize(creds)
